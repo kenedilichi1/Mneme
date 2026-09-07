@@ -1,0 +1,48 @@
+import SearchBar from "@/components/SearchBar";
+import { theme } from "@/constant/theme";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import LibraryFilterTab from "./LibraryFilterTab";
+import LibraryHeader from "./LibraryHeader";
+
+export default function LibraryScreen() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <LibraryHeader onAddResource={() => router.push("/library/add-source")} />
+      <SearchBar
+        placeholder="Search your knowledge"
+        leadingIcon={
+          <Ionicons
+            name="search-outline"
+            size={22}
+            color={theme.color.textSecondary}
+            onPress={() => {
+              console.log("Search bar pressed");
+            }}
+          />
+        }
+        trailingIcon={
+          <View style={styles.trailingIcons}>
+            <Ionicons name="mic-outline" size={22} color={theme.color.accent} />
+          </View>
+        }
+      />
+
+      <LibraryFilterTab />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.color.surface,
+  },
+  trailingIcons: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+});
