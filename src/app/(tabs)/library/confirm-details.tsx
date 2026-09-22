@@ -1,4 +1,4 @@
-import ConfirmBookDetailsScreen from "@/modules/library/components/ConfirmBookDetailsScreen";
+import { ConfirmBookDetailsScreen } from "@/modules/library";
 
 export default function ConfirmDetailsRoute() {
   return <ConfirmBookDetailsScreen />;

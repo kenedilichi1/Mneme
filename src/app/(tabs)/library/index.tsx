@@ -1,5 +1,5 @@
-import LibraryScreen from "@/modules/library/components/LibraryScreen";
+import { LibraryScreen } from "@/modules/library";
 
-export default function Library() {
+export default function LibraryRoute() {
   return <LibraryScreen />;
 }

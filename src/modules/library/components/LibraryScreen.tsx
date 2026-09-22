@@ -1,11 +1,12 @@
-import SearchBar from "@/components/SearchBar";
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LibraryFilterTab from "./LibraryFilterTab";
+
+import SearchBar from "@/components/SearchBar";
+import { theme } from "@/constant/theme";
 import LibraryHeader from "./LibraryHeader";
+import LibraryList from "./LibraryList";
 
 export default function LibraryScreen() {
   return (
@@ -18,9 +19,6 @@ export default function LibraryScreen() {
             name="search-outline"
             size={22}
             color={theme.color.textSecondary}
-            onPress={() => {
-              console.log("Search bar pressed");
-            }}
           />
         }
         trailingIcon={
@@ -30,7 +28,7 @@ export default function LibraryScreen() {
         }
       />
 
-      <LibraryFilterTab />
+      <LibraryList />
     </SafeAreaView>
   );
 }
@@ -43,6 +41,6 @@ const styles = StyleSheet.create({
   trailingIcons: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
+    gap: theme.spacing.md,
   },
 });

@@ -1,96 +1,64 @@
-import { theme } from "@/constant/theme";
-import { useEffect, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
-interface SectionCardProps {
+import { theme } from "@/constant/theme";
+import { usePressScale } from "@/hooks/usePressScale";
+
+type ProgressBarCardProps = {
   readonly title?: string;
   readonly progress?: number;
   readonly onPress?: () => void;
-}
+};
 
-export default function PremiumProgressCard({
+export default function ProgressBarCard({
   title = "Understanding replication",
   progress = 33,
   onPress,
-}: SectionCardProps) {
-  // Animation drivers
-  const [animatedWidth] = useState(() => new Animated.Value(0));
-  const [scaleValue] = useState(() => new Animated.Value(1));
-  const [opacityValue] = useState(() => new Animated.Value(1));
+}: ProgressBarCardProps) {
+  const press = usePressScale();
+  const fill = useSharedValue(0);
 
-  // Trigger progress filling animation smoothly on mount
+  const safeProgress = Math.max(0, Math.min(100, progress));
+
   useEffect(() => {
-    // Clamping progress value safely between 0 and 100
-    const safeProgress = Math.max(0, Math.min(100, progress));
+    fill.value = withTiming(safeProgress, { duration: 650 });
+  }, [fill, safeProgress]);
 
-    Animated.timing(animatedWidth, {
-      toValue: safeProgress,
-      duration: 650, // Smooth, natural motion timing
-      useNativeDriver: false, // Layout properties (width) don't support native driver
-    }).start();
-  }, [animatedWidth, progress]);
-
-  // Convert animated numbers directly to layouts
-  const widthInterpolate = animatedWidth.interpolate({
-    inputRange: [0, 100],
-    outputRange: ["0%", "100%"],
-  });
-
-  // Handle touch physics
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.timing(scaleValue, {
-        toValue: 0.98,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.timing(scaleValue, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  // Reanimated drives this on the UI thread. The previous legacy `Animated`
+  // version used `useNativeDriver: false`, animating layout on the JS thread.
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${fill.value}%`,
+  }));
 
   return (
     <Pressable
+      accessibilityRole={onPress ? "button" : undefined}
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       style={styles.touchWrapper}
     >
-      <Animated.View
-        style={[
-          styles.cardContainer,
-          { transform: [{ scale: scaleValue }], opacity: opacityValue },
-        ]}
-      >
-        {/* Section Title */}
+      <Animated.View style={[styles.cardContainer, press.style]}>
         <Text style={styles.titleText} numberOfLines={1}>
           {title}
         </Text>
 
-        {/* Progress Bar Track */}
-        <View style={styles.progressBarTrack}>
-          {/* Animated Progress Fill */}
-          <Animated.View
-            style={[styles.progressBarFill, { width: widthInterpolate }]}
-          />
+        <View
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: safeProgress,
+            text: `${safeProgress}% complete`,
+          }}
+          style={styles.progressBarTrack}
+        >
+          <Animated.View style={[styles.progressBarFill, fillStyle]} />
         </View>
       </Animated.View>
     </Pressable>
@@ -99,23 +67,22 @@ export default function PremiumProgressCard({
 
 const styles = StyleSheet.create({
   touchWrapper: {
-    // marginHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: theme.spacing.sm,
   },
   cardContainer: {
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 28,
-    paddingTop: 24,
-    paddingBottom: 28,
-    paddingHorizontal: 24,
+    borderRadius: theme.radius.xxxl,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl + 4,
+    paddingHorizontal: theme.spacing.xl,
     justifyContent: "center",
   },
   titleText: {
     color: theme.color.text,
-    fontSize: 22,
+    fontSize: theme.fontSize.xxl,
     fontWeight: "700",
     letterSpacing: -0.3,
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   progressBarTrack: {
     height: 12,
@@ -126,7 +93,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: theme.color.primary,
+    backgroundColor: theme.color.brand,
     borderRadius: 6,
   },
 });

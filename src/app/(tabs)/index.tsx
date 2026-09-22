@@ -1,7 +1,9 @@
-import HomeScreen from "@/modules/home/components/HomeScreen";
 import { StyleSheet, View } from "react-native";
 
-export default function Index() {
+import { theme } from "@/constant/theme";
+import { HomeScreen } from "@/modules/home";
+
+export default function HomeRoute() {
   return (
     <View style={styles.container}>
       <HomeScreen />
@@ -12,6 +14,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.lg,
   },
 });

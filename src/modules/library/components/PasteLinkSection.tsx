@@ -1,5 +1,7 @@
+import { StyleSheet, TextInput, View } from "react-native";
+
+import SectionDivider from "@/components/SectionDivider";
 import { theme } from "@/constant/theme";
-import { StyleSheet, Text, TextInput, View } from "react-native";
 
 type PasteLinkSectionProps = {
   readonly value: string;
@@ -14,6 +16,7 @@ export default function PasteLinkSection({
     <View>
       <SectionDivider label="or paste a link" />
       <TextInput
+        accessibilityLabel="Paste a link"
         value={value}
         onChangeText={onChangeText}
         placeholder="https://..."
@@ -26,33 +29,15 @@ export default function PasteLinkSection({
   );
 }
 
-export function SectionDivider({ label }: { readonly label: string }) {
-  return (
-    <View style={styles.dividerLabel}>
-      <View style={styles.divider} />
-      <Text style={styles.dividerText}>{label}</Text>
-      <View style={styles.divider} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  dividerLabel: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 20,
-    marginVertical: 32,
-  },
-  divider: { backgroundColor: theme.color.border, flex: 1, height: 1 },
-  dividerText: { color: theme.color.textSecondary, fontSize: 18 },
   input: {
     backgroundColor: theme.color.surfaceElevated,
     borderColor: theme.color.border,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
     color: theme.color.text,
-    fontSize: 18,
-    paddingHorizontal: 24,
-    paddingVertical: 22,
+    fontSize: theme.fontSize.xl,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.xl - 2,
   },
 });

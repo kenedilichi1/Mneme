@@ -1,9 +1,11 @@
-import { theme } from "@/constant/theme";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { theme, typography } from "@/constant/theme";
 import PasteLinkSection from "./PasteLinkSection";
 import RecentFilesSection from "./RecentFilesSection";
 import UploadSection from "./UploadSection";
@@ -13,7 +15,7 @@ export default function UploadDocumentScreen() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [isChoosingFile, setIsChoosingFile] = useState(false);
 
-  const chooseFile = async () => {
+  const chooseFile = useCallback(async () => {
     if (isChoosingFile) return;
 
     setIsChoosingFile(true);
@@ -42,7 +44,7 @@ export default function UploadDocumentScreen() {
     } finally {
       setIsChoosingFile(false);
     }
-  };
+  }, [isChoosingFile]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,7 +59,12 @@ export default function UploadDocumentScreen() {
             onPress={() => router.back()}
             style={styles.backButton}
           >
-            <Text style={styles.backIcon}>←</Text>
+            {/* Was a raw "←" glyph, which renders inconsistently per platform. */}
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={theme.color.textSecondary}
+            />
           </Pressable>
           <Text style={styles.headerTitle}>Upload book</Text>
           <View style={styles.headerSpacer} />
@@ -81,8 +88,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 32,
-    paddingHorizontal: 30,
+    paddingBottom: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.xxl - 2,
   },
   header: {
     alignItems: "center",
@@ -93,20 +100,12 @@ const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 28,
+    borderRadius: theme.radius.xxxl,
     height: 46,
     justifyContent: "center",
     width: 46,
   },
-  backIcon: {
-    color: theme.color.textSecondary,
-    fontSize: 30,
-  },
-  headerTitle: {
-    color: theme.color.text,
-    fontSize: 28,
-    fontWeight: "700",
-  },
+  headerTitle: typography.screenTitle,
   headerSpacer: {
     width: 46,
   },

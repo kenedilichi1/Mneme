@@ -1,7 +1,5 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
-import Pdf from "react-native-pdf";
 import { useEffect, useState } from "react";
 import {
   Image,
@@ -13,10 +11,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { extractDocumentPreview } from "../services/documentPreview";
-import { extractBookTitle } from "../utils/bookTitle";
+import Pdf from "react-native-pdf";
 
-const categories = ["Books", "Articles", "Notes"] as const;
+import { theme, typography } from "@/constant/theme";
+import { extractDocumentPreview } from "../services/documentPreview";
+import type { ItemCategory } from "../types/library.type";
+import {
+  documentLabel,
+  extractBookTitle,
+  formatFileSize,
+  getExtension,
+} from "../utils/fileName";
+
+const CATEGORIES: readonly ItemCategory[] = ["Books", "Audio", "Videos", "Notes"];
 
 export default function ConfirmBookDetailsScreen() {
   const params = useLocalSearchParams<{
@@ -24,37 +31,48 @@ export default function ConfirmBookDetailsScreen() {
     fileSize?: string | string[];
     fileUri?: string | string[];
   }>();
-  const fileName = getParam(params.fileName, "Selected book");
-  const fileSize = getParam(params.fileSize, "");
-  const fileUri = getParam(params.fileUri, "");
+
+  const fileName = firstParam(params.fileName, "Selected book");
+  const fileSize = firstParam(params.fileSize, "");
+  const fileUri = firstParam(params.fileUri, "");
   const isPdf = getExtension(fileName) === "pdf";
-  const initialTitle = extractBookTitle(fileName);
-  const [title, setTitle] = useState(initialTitle);
+
+  // Derived, with the user's edit taking precedence. A `useState(initialTitle)`
+  // initialiser would keep the previous file's title if this screen is reached
+  // again with different params, and syncing it via an effect would cascade a
+  // second render.
+  const [titleEdit, setTitleEdit] = useState<string | null>(null);
+  const title = titleEdit ?? extractBookTitle(fileName);
+
   const [author, setAuthor] = useState("");
   const [coverUri, setCoverUri] = useState<string | null>(null);
-  const [category, setCategory] =
-    useState<(typeof categories)[number]>("Books");
+  const [category, setCategory] = useState<ItemCategory>("Books");
 
+  // The label used to read "PDF" for every upload, including EPUB and MOBI.
+  const label = documentLabel(fileName);
   const fileSizeLabel = fileSize
-    ? `${formatFileSize(Number(fileSize))} · PDF`
-    : "PDF document";
+    ? `${formatFileSize(Number(fileSize))} · ${label}`
+    : `${label} document`;
 
   useEffect(() => {
-    const controller = new AbortController();
+    // `extractDocumentPreview` takes no abort signal, so there is nothing to
+    // cancel — this flag only stops a late result from setting state after
+    // unmount. An AbortController here implied cancellation that never existed.
+    let cancelled = false;
 
-    async function loadPreview() {
+    (async () => {
+      if (!fileUri) return;
       try {
-        if (!fileUri) return;
         const previewUri = await extractDocumentPreview(fileUri, fileName);
-        if (!controller.signal.aborted) setCoverUri(previewUri);
+        if (!cancelled) setCoverUri(previewUri);
       } catch {
-        if (!controller.signal.aborted) setCoverUri(null);
+        if (!cancelled) setCoverUri(null);
       }
-    }
+    })();
 
-    void loadPreview();
-
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+    };
   }, [fileName, fileUri]);
 
   return (
@@ -92,7 +110,7 @@ export default function ConfirmBookDetailsScreen() {
           </View>
         </View>
 
-        <DetailField label="Title" value={title} onChangeText={setTitle} />
+        <DetailField label="Title" value={title} onChangeText={setTitleEdit} />
         <DetailField
           label="Author"
           value={author}
@@ -101,23 +119,40 @@ export default function ConfirmBookDetailsScreen() {
         />
 
         <Text style={styles.label}>Category</Text>
-        <Pressable
-          onPress={() => setCategory(nextCategory(category))}
-          style={styles.categoryInput}
-        >
-          <Text style={styles.inputText}>{category}</Text>
-          <Ionicons
-            name="chevron-down"
-            size={22}
-            color={theme.color.textSecondary}
-          />
-        </Pressable>
+        <View style={styles.categoryRow}>
+          {CATEGORIES.map((option) => {
+            const isSelected = option === category;
+            return (
+              <Pressable
+                key={option}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+                onPress={() => setCategory(option)}
+                style={[
+                  styles.categoryChip,
+                  isSelected && styles.categoryChipSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    isSelected && styles.categoryChipTextSelected,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <Pressable
           accessibilityRole="button"
           onPress={() => router.dismissTo("/(tabs)/library")}
           style={styles.addButton}
         >
+          {/* TODO: persist the book before dismissing — this currently
+              discards the title, author and category. */}
           <Text style={styles.addButtonText}>Add to library</Text>
         </Pressable>
         <Pressable
@@ -162,9 +197,7 @@ function CoverPreview({
     return <Image source={{ uri: coverUri }} style={styles.coverImage} />;
   }
 
-  return (
-    <Ionicons name="book-outline" size={38} color={theme.color.primaryLight} />
-  );
+  return <Ionicons name="book-outline" size={38} color={theme.color.onBrand} />;
 }
 
 function DetailField({
@@ -182,6 +215,7 @@ function DetailField({
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        accessibilityLabel={label}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -192,31 +226,17 @@ function DetailField({
   );
 }
 
-function getParam(value: string | string[] | undefined, fallback: string) {
+function firstParam(value: string | string[] | undefined, fallback: string) {
   if (Array.isArray(value)) return value[0] ?? fallback;
   return value || fallback;
 }
 
-function formatFileSize(bytes: number) {
-  if (!bytes) return "Unknown size";
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function getExtension(fileName: string) {
-  const extensionIndex = fileName.lastIndexOf(".");
-  return extensionIndex === -1
-    ? ""
-    : fileName.slice(extensionIndex + 1).toLowerCase();
-}
-
-function nextCategory(category: (typeof categories)[number]) {
-  const index = categories.indexOf(category);
-  return categories[(index + 1) % categories.length];
-}
-
 const styles = StyleSheet.create({
   container: { backgroundColor: theme.color.background, flex: 1 },
-  content: { paddingBottom: 32, paddingHorizontal: 30 },
+  content: {
+    paddingBottom: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.xxl - 2,
+  },
   header: {
     alignItems: "center",
     flexDirection: "row",
@@ -226,97 +246,112 @@ const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 28,
+    borderRadius: theme.radius.xxxl,
     height: 46,
     justifyContent: "center",
     width: 46,
   },
-  headerTitle: { color: theme.color.text, fontSize: 28, fontWeight: "700" },
+  headerTitle: typography.screenTitle,
   headerSpacer: { width: 46 },
   fileCard: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
     borderColor: theme.color.border,
-    borderRadius: 24,
+    borderRadius: theme.radius.xxl,
     borderWidth: 1,
     flexDirection: "row",
-    padding: 24,
+    padding: theme.spacing.xl,
   },
   cover: {
     alignItems: "center",
-    backgroundColor: theme.color.primary,
-    borderRadius: 8,
+    backgroundColor: theme.color.brand,
+    borderRadius: theme.radius.sm,
     height: 100,
     justifyContent: "center",
+    overflow: "hidden",
     width: 76,
   },
-  coverImage: {
-    borderRadius: 8,
-    height: "100%",
-    width: "100%",
+  coverImage: { height: "100%", width: "100%" },
+  pdfCover: { height: "100%", width: "100%" },
+  pdfPreviewContainer: { height: "100%", width: "100%" },
+  fileInfo: { flex: 1, marginLeft: theme.spacing.xl },
+  fileName: {
+    color: theme.color.text,
+    fontSize: theme.fontSize.xl,
+    fontWeight: "700",
   },
-  pdfCover: {
-    height: "100%",
-    width: "100%",
-  },
-  pdfPreviewContainer: {
-    height: "100%",
-    width: "100%",
-  },
-  fileInfo: { flex: 1, marginLeft: 24 },
-  fileName: { color: theme.color.text, fontSize: 18, fontWeight: "700" },
   fileMetadata: {
     color: theme.color.textSecondary,
-    fontSize: 17,
-    marginTop: 8,
+    fontSize: theme.fontSize.lg,
+    marginTop: theme.spacing.sm,
   },
-  field: { marginTop: 32 },
-  label: { color: theme.color.textSecondary, fontSize: 18, marginBottom: 12 },
+  field: { marginTop: theme.spacing.xxl },
+  label: {
+    color: theme.color.textSecondary,
+    fontSize: theme.fontSize.xl,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.xxl,
+  },
   input: {
     backgroundColor: theme.color.surfaceElevated,
     borderColor: theme.color.border,
-    borderRadius: 18,
+    borderRadius: theme.radius.lg + 2,
     borderWidth: 1,
     color: theme.color.text,
-    fontSize: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 22,
+    fontSize: theme.fontSize.xl,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.xl - 2,
   },
-  categoryInput: {
-    alignItems: "center",
+  // Was a tap-to-cycle Pressable behind a chevron-down, which read as a
+  // dropdown and never revealed the available options.
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+  },
+  categoryChip: {
     backgroundColor: theme.color.surfaceElevated,
     borderColor: theme.color.border,
-    borderRadius: 18,
+    borderRadius: theme.radius.pill,
     borderWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 22,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
   },
-  inputText: { color: theme.color.text, fontSize: 20 },
+  categoryChipSelected: {
+    backgroundColor: theme.color.brand,
+    borderColor: theme.color.brand,
+  },
+  categoryChipText: {
+    color: theme.color.textSecondary,
+    fontSize: theme.fontSize.lg,
+    fontWeight: "600",
+  },
+  categoryChipTextSelected: {
+    color: theme.color.onBrand,
+  },
   addButton: {
     alignItems: "center",
-    backgroundColor: theme.color.warning,
-    borderRadius: 20,
-    marginTop: 36,
-    paddingVertical: 22,
+    backgroundColor: theme.color.brand,
+    borderRadius: theme.radius.xl,
+    marginTop: theme.spacing.xxl + 4,
+    paddingVertical: theme.spacing.xl - 2,
   },
   addButtonText: {
-    color: theme.color.background,
-    fontSize: 24,
+    color: theme.color.onBrand,
+    fontSize: theme.fontSize.xxl,
     fontWeight: "700",
   },
   cancelButton: {
     alignItems: "center",
     borderColor: theme.color.border,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
-    marginTop: 16,
-    paddingVertical: 22,
+    marginTop: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl - 2,
   },
   cancelButtonText: {
     color: theme.color.text,
-    fontSize: 22,
+    fontSize: theme.fontSize.xxl,
     fontWeight: "700",
   },
 });
