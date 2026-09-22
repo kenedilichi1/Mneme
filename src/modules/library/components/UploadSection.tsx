@@ -1,6 +1,7 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { theme } from "@/constant/theme";
 
 type UploadSectionProps = {
   readonly selectedFile: string | null;
@@ -16,11 +17,13 @@ export default function UploadSection({
   return (
     <View style={styles.panel}>
       <View style={styles.documentIconBox}>
-        <Ionicons name="book-outline" size={38} color={theme.color.warning} />
+        <Ionicons name="book-outline" size={38} color={theme.color.brand} />
       </View>
       <Text style={styles.title}>Choose a file to upload</Text>
       <Text style={styles.description}>PDF, EPUB, or MOBI · up to 200MB</Text>
       <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isChoosingFile, busy: isChoosingFile }}
         disabled={isChoosingFile}
         onPress={onChooseFile}
         style={[styles.button, isChoosingFile && styles.disabledButton]}
@@ -45,45 +48,39 @@ export default function UploadSection({
 const styles = StyleSheet.create({
   panel: {
     alignItems: "center",
-    borderColor: theme.color.border,
-    borderRadius: 28,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    paddingHorizontal: 20,
-    paddingVertical: 60,
   },
   documentIconBox: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 24,
+    borderRadius: theme.radius.xxl,
     height: 80,
     justifyContent: "center",
-    marginBottom: 28,
+    marginBottom: theme.spacing.xl + 4,
     width: 92,
   },
   title: {
     color: theme.color.text,
-    fontSize: 18,
+    fontSize: theme.fontSize.xl,
     fontWeight: "700",
     textAlign: "center",
   },
   description: {
     color: theme.color.textSecondary,
-    fontSize: 14,
-    marginTop: 12,
+    fontSize: theme.fontSize.md,
+    marginTop: theme.spacing.md,
     textAlign: "center",
   },
   button: {
     alignItems: "center",
-    backgroundColor: theme.color.warning,
-    borderRadius: 20,
-    marginTop: 58,
-    paddingVertical: 22,
+    backgroundColor: theme.color.brand,
+    borderRadius: theme.radius.xl,
+    marginTop: theme.spacing.xxl + 26,
+    paddingVertical: theme.spacing.xl - 2,
     width: "100%",
   },
   buttonText: {
-    color: theme.color.background,
-    fontSize: 18,
+    color: theme.color.onBrand,
+    fontSize: theme.fontSize.xl,
     fontWeight: "700",
   },
   disabledButton: {
@@ -91,8 +88,8 @@ const styles = StyleSheet.create({
   },
   selectedFile: {
     color: theme.color.textSecondary,
-    fontSize: 13,
-    marginTop: 12,
+    fontSize: theme.fontSize.sm,
+    marginTop: theme.spacing.md,
     maxWidth: "100%",
   },
 });

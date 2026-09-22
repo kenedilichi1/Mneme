@@ -1,8 +1,5 @@
-import { theme } from "@/constant/theme";
 import type { ReactNode } from "react";
-import { useState } from "react";
 import {
-  Animated,
   Pressable,
   StyleSheet,
   Text,
@@ -10,10 +7,19 @@ import {
   type TextInputProps,
   View,
 } from "react-native";
+import Animated from "react-native-reanimated";
+
+import { theme } from "@/constant/theme";
+import { usePressScale } from "@/hooks/usePressScale";
 
 type SearchBarProps = Omit<TextInputProps, "placeholderTextColor" | "style"> & {
   readonly label?: string;
   readonly placeholder?: string;
+  /**
+   * When set, the bar becomes a button that navigates instead of a text field.
+   * A `TextInput` nested inside a `Pressable` swallows taps, so the two modes
+   * render different trees rather than layering one over the other.
+   */
   readonly onPress?: () => void;
   readonly leadingIcon?: ReactNode;
   readonly trailingIcon?: ReactNode;
@@ -27,89 +33,67 @@ export default function SearchBar({
   trailingIcon,
   ...textInputProps
 }: SearchBarProps) {
-  const [scaleValue] = useState(() => new Animated.Value(1));
-  const [opacityValue] = useState(() => new Animated.Value(1));
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.timing(scaleValue, {
-        toValue: 0.98,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.timing(scaleValue, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  const press = usePressScale();
 
   return (
     <View style={styles.outerContainer}>
       {!!label && <Text style={styles.headerText}>{label}</Text>}
 
-      <Pressable
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        style={styles.touchWrapper}
-      >
-        <Animated.View
-          style={[
-            styles.searchCapsule,
-            { transform: [{ scale: scaleValue }], opacity: opacityValue },
-          ]}
+      {onPress ? (
+        <Pressable
+          accessibilityLabel={label ?? placeholder}
+          accessibilityRole="button"
+          onPress={onPress}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
         >
+          <Animated.View style={[styles.searchCapsule, press.style]}>
+            {leadingIcon ? (
+              <View style={styles.leadingIcon}>{leadingIcon}</View>
+            ) : null}
+            <Text style={styles.prompt} numberOfLines={1}>
+              {placeholder}
+            </Text>
+            {trailingIcon ? (
+              <View style={styles.trailingIcon}>{trailingIcon}</View>
+            ) : null}
+          </Animated.View>
+        </Pressable>
+      ) : (
+        <View style={styles.searchCapsule}>
           {leadingIcon ? (
             <View style={styles.leadingIcon}>{leadingIcon}</View>
           ) : null}
           <TextInput
             {...textInputProps}
-            style={styles.placeholderText}
+            // This is the *typed text* colour. It used to be textSecondary,
+            // which rendered everything the user typed in the muted
+            // placeholder grey.
+            style={styles.input}
             placeholder={placeholder}
             placeholderTextColor={theme.color.textSecondary}
             returnKeyType="search"
-            numberOfLines={1}
           />
           {trailingIcon ? (
             <View style={styles.trailingIcon}>{trailingIcon}</View>
           ) : null}
-        </Animated.View>
-      </Pressable>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   outerContainer: {
-    marginTop: 32,
+    marginTop: theme.spacing.xxl,
     justifyContent: "center",
   },
   headerText: {
     color: theme.color.text,
-    fontSize: 18,
+    fontSize: theme.fontSize.xl,
     fontWeight: "600",
     letterSpacing: -0.4,
-    marginBottom: 16,
-  },
-  touchWrapper: {
-    width: "100%",
+    marginBottom: theme.spacing.lg,
   },
   searchCapsule: {
     flexDirection: "row",
@@ -117,20 +101,27 @@ const styles = StyleSheet.create({
     backgroundColor: theme.color.surfaceElevated,
     borderWidth: 1,
     borderColor: theme.color.border,
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    borderRadius: theme.radius.xl,
+    paddingVertical: theme.spacing.xl - 4,
+    paddingHorizontal: theme.spacing.xl,
   },
   leadingIcon: {
-    marginRight: 14,
+    marginRight: theme.spacing.md + 2,
   },
   trailingIcon: {
-    marginLeft: 14,
+    marginLeft: theme.spacing.md + 2,
   },
-  placeholderText: {
+  input: {
+    flex: 1,
+    color: theme.color.text,
+    fontSize: theme.fontSize.xl,
+    fontWeight: "500",
+    letterSpacing: -0.2,
+  },
+  prompt: {
     flex: 1,
     color: theme.color.textSecondary,
-    fontSize: 18,
+    fontSize: theme.fontSize.xl,
     fontWeight: "500",
     letterSpacing: -0.2,
   },

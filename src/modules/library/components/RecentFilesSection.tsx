@@ -1,28 +1,23 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StyleSheet, Text, View } from "react-native";
-import { SectionDivider } from "./PasteLinkSection";
 
-const recentFiles = [
-  { name: "kafka-definitive-guide.pdf", location: "On this device" },
-  { name: "sre-book-google.epub", location: "iCloud Drive" },
-];
+import SectionDivider from "@/components/SectionDivider";
+import { theme } from "@/constant/theme";
+import { RECENT_FILES } from "../data/libraryData";
 
 export default function RecentFilesSection() {
   return (
     <View>
       <SectionDivider label="recent files" />
-      {recentFiles.map((file) => (
+      {RECENT_FILES.map((file) => (
         <View key={file.name} style={styles.file}>
           <View style={styles.iconBox}>
-            <Ionicons
-              name="book-outline"
-              size={32}
-              color={theme.color.warning}
-            />
+            <Ionicons name="book-outline" size={32} color={theme.color.brand} />
           </View>
-          <View>
-            <Text style={styles.name}>{file.name}</Text>
+          <View style={styles.details}>
+            <Text style={styles.name} numberOfLines={1}>
+              {file.name}
+            </Text>
             <Text style={styles.location}>{file.location}</Text>
           </View>
         </View>
@@ -37,17 +32,28 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.color.border,
     borderBottomWidth: 1,
     flexDirection: "row",
-    gap: 20,
-    paddingVertical: 18,
+    gap: theme.spacing.xl - 4,
+    paddingVertical: theme.spacing.lg + 2,
   },
   iconBox: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     height: 64,
     justifyContent: "center",
     width: 64,
   },
-  name: { color: theme.color.text, fontSize: 18, fontWeight: "700" },
-  location: { color: theme.color.textSecondary, fontSize: 16, marginTop: 4 },
+  details: {
+    flex: 1,
+  },
+  name: {
+    color: theme.color.text,
+    fontSize: theme.fontSize.xl,
+    fontWeight: "700",
+  },
+  location: {
+    color: theme.color.textSecondary,
+    fontSize: theme.fontSize.lg,
+    marginTop: theme.spacing.xs,
+  },
 });

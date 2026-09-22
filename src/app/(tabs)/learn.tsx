@@ -1,24 +1,10 @@
-import { theme } from "@/constant/theme";
-import { StyleSheet, Text, View } from "react-native";
+import PlaceholderScreen from "@/components/PlaceholderScreen";
 
-export default function LearnScreen() {
+export default function LearnRoute() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Learn</Text>
-    </View>
+    <PlaceholderScreen
+      title="Learn"
+      description="Review decks and progress will live here."
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    backgroundColor: theme.color.background,
-    flex: 1,
-    justifyContent: "center",
-  },
-  text: {
-    color: theme.color.text,
-    fontSize: 24,
-    fontWeight: "700",
-  },
-});

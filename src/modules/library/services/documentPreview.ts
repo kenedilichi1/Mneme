@@ -1,6 +1,8 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { strFromU8, unzipSync } from "fflate";
 
+import { getExtension } from "../utils/fileName";
+
 const previewDirectory = new Directory(Paths.cache, "mneme-previews");
 
 export async function extractDocumentPreview(
@@ -133,14 +135,6 @@ function resolvePath(directory: string, href: string) {
   }
 
   return resolved.join("/");
-}
-
-function getExtension(path: string) {
-  const name = path.split("/").pop() ?? path;
-  const extensionIndex = name.lastIndexOf(".");
-  return extensionIndex === -1
-    ? ""
-    : name.slice(extensionIndex + 1).toLowerCase();
 }
 
 function escapeRegExp(value: string) {

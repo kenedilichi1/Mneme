@@ -1,6 +1,7 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet } from "react-native";
+
+import { theme } from "@/constant/theme";
 
 type AddLibraryResourceButtonProps = {
   readonly onPress?: () => void;
@@ -22,7 +23,7 @@ export default function AddLibraryResourceButton({
         pressed && styles.pressed,
       ]}
     >
-      <Ionicons name="add" size={28} color={theme.color.warning} />
+      <Ionicons name="add" size={28} color={theme.color.brand} />
     </Pressable>
   );
 }
@@ -30,7 +31,7 @@ export default function AddLibraryResourceButton({
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    borderRadius: 28,
+    borderRadius: theme.radius.xxxl,
     elevation: 8,
     height: 56,
     justifyContent: "center",
@@ -41,9 +42,9 @@ const styles = StyleSheet.create({
     width: 56,
   },
   floatingButton: {
-    bottom: 24,
+    bottom: theme.spacing.xl,
     position: "absolute",
-    right: 4,
+    right: theme.spacing.xs,
     zIndex: 10,
   },
   headerButton: {

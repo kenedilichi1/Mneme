@@ -1,18 +1,21 @@
-import SearchBar from "@/components/SearchBar";
-import { libraryCategory } from "@/constant/data/libraryCategory";
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import LibrarySummaryCard from "./LibraryCategoryCard";
+
+import SearchBar from "@/components/SearchBar";
+import { theme, typography } from "@/constant/theme";
+import { libraryCategory } from "../data/libraryCategory";
+import LibraryCategoryCard from "./LibraryCategoryCard";
 
 export default function LibrarySection() {
   return (
     <View style={styles.section}>
       <Text style={styles.title}>Your Library</Text>
+
       <View style={styles.categories}>
         {libraryCategory.map((category) => (
           <View key={category.categoryName} style={styles.category}>
-            <LibrarySummaryCard
+            <LibraryCategoryCard
               categoryName={category.categoryName}
               icon={
                 <Ionicons
@@ -26,28 +29,13 @@ export default function LibrarySection() {
           </View>
         ))}
       </View>
+
       <SearchBar
         label="Ask your knowledge"
         placeholder="What do my books say about..."
-        // leadingIcon={
-        //   <Ionicons
-        //     name="search-outline"
-        //     size={22}
-        //     color={theme.color.textSecondary}
-        //     onPress={() => {
-        //   console.log("Search bar pressed");
-        // }}
-        //   />
-        // }
+        onPress={() => router.push("/(tabs)/ask")}
         trailingIcon={
-          <View style={styles.trailingIcons}>
-            {/* <Ionicons name="mic-outline" size={22} color={theme.color.accent} /> */}
-            <Ionicons
-              name="arrow-forward"
-              size={22}
-              color={theme.color.primary}
-            />
-          </View>
+          <Ionicons name="arrow-forward" size={22} color={theme.color.brand} />
         }
       />
     </View>
@@ -56,25 +44,16 @@ export default function LibrarySection() {
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 16,
-    marginTop: 32,
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.xxl,
   },
-  title: {
-    color: theme.color.text,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  title: typography.sectionTitle,
   categories: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
+    marginTop: theme.spacing.lg,
   },
   category: {
     flex: 1,
-  },
-  trailingIcons: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
   },
 });

@@ -1,12 +1,22 @@
-import Header from "@/components/Header";
 import { ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import Header from "@/components/Header";
+import { useSession } from "@/modules/auth";
 import { homeContent } from "../data/homeContent";
 import ContinueLearningCard from "./ContinueLearningCard";
 import LibrarySection from "./LibrarySection";
 import TodayProgressSection from "./TodayProgressSection";
 
+function greetingForHour(hour: number): string {
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
+}
+
 export default function HomeScreen() {
+  const { user } = useSession();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -15,8 +25,8 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Header
-          primaryText={homeContent.userName}
-          secondaryText="Good Morning"
+          primaryText={user?.first_name ?? "Welcome"}
+          secondaryText={greetingForHour(new Date().getHours())}
         />
         <ContinueLearningCard {...homeContent.currentBook} />
         <TodayProgressSection progress={homeContent.todayProgress} />

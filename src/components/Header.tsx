@@ -1,17 +1,18 @@
-import { theme } from "@/constant/theme";
 import { StyleSheet, Text, View } from "react-native";
 
-type HomeHeaderProps = {
+import { theme } from "@/constant/theme";
+
+type HeaderProps = {
   readonly primaryText: string;
   readonly secondaryText: string;
   readonly subText?: string;
 };
 
-export default function HomeHeader({
+export default function Header({
   primaryText,
   secondaryText,
   subText,
-}: HomeHeaderProps) {
+}: HeaderProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.secondaryText}>{secondaryText}</Text>
@@ -23,22 +24,22 @@ export default function HomeHeader({
 
 const styles = StyleSheet.create({
   container: {
-    display: "flex",
     flexDirection: "column",
-    gap: 4,
-    marginTop: 16,
-    marginBottom: 16,
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   secondaryText: {
     color: theme.color.textSecondary,
-    fontSize: 14,
+    fontSize: theme.fontSize.md,
   },
   primaryText: {
     color: theme.color.text,
-    fontSize: 32,
-    fontWeight: "bold",
+    fontSize: theme.fontSize.xxxl + 4,
+    fontWeight: "700",
   },
   subText: {
     color: theme.color.text,
+    fontSize: theme.fontSize.md,
   },
 });

@@ -1,47 +1,51 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { theme } from "@/constant/theme";
 import { CATEGORIES, MEDIA_DATA } from "../data/libraryData";
-import { Category, MediaItem } from "../types/library.type";
+import {
+  categoryOf,
+  type Category,
+  type MediaType,
+} from "../types/library.type";
+
+type ViewMode = "list" | "grid";
+type IconName = ComponentProps<typeof Ionicons>["name"];
+
+const ICON_BY_TYPE: Record<MediaType, IconName> = {
+  Book: "book-outline",
+  Audio: "musical-notes-outline",
+  Video: "play-circle-outline",
+  Note: "create-outline",
+};
 
 function SeparatorLine() {
   return <View style={styles.separatorLine} />;
 }
 
-export default function LibraryFilterTab() {
+export default function LibraryList() {
   const [activeTab, setActiveTab] = useState<Category>("All");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const filteredData = MEDIA_DATA.filter((item) => {
-    if (activeTab === "All") return true;
-    return item.category === activeTab;
-  });
-
-  const renderIconSymbol = (type: MediaItem["type"]) => {
-    switch (type) {
-      case "Book":
-        return "book-outline";
-      case "Audio":
-        return "musical-notes-outline";
-      case "Video":
-        return "play-circle-outline";
-      case "Note":
-        return "create-outline";
-      default:
-        return "document-outline";
-    }
-  };
+  const filteredData = useMemo(
+    () =>
+      activeTab === "All"
+        ? MEDIA_DATA
+        : MEDIA_DATA.filter((item) => categoryOf(item) === activeTab),
+    [activeTab],
+  );
 
   return (
     <View style={styles.screenBackground}>
-      <View style={styles.tabBarContainer}>
+      <View accessibilityRole="tablist" style={styles.tabBarContainer}>
         {CATEGORIES.map((tab) => {
           const isSelected = activeTab === tab;
           return (
             <Pressable
               key={tab}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isSelected }}
               onPress={() => setActiveTab(tab)}
               style={styles.tabButton}
             >
@@ -60,48 +64,38 @@ export default function LibraryFilterTab() {
       </View>
 
       <View style={styles.viewToggleContainer}>
-        <Pressable
-          accessibilityLabel="List view"
-          accessibilityRole="button"
-          onPress={() => setViewMode("list")}
-          style={[
-            styles.viewToggleButton,
-            viewMode === "list" && styles.activeViewToggleButton,
-          ]}
-        >
-          <Ionicons
-            name="list-outline"
-            size={20}
-            color={
-              viewMode === "list"
-                ? styles.activeViewToggleIcon.color
-                : styles.inactiveViewToggleIcon.color
-            }
-          />
-        </Pressable>
-        <Pressable
-          accessibilityLabel="Grid view"
-          accessibilityRole="button"
-          onPress={() => setViewMode("grid")}
-          style={[
-            styles.viewToggleButton,
-            viewMode === "grid" && styles.activeViewToggleButton,
-          ]}
-        >
-          <Ionicons
-            name="grid-outline"
-            size={20}
-            color={
-              viewMode === "grid"
-                ? styles.activeViewToggleIcon.color
-                : styles.inactiveViewToggleIcon.color
-            }
-          />
-        </Pressable>
+        {(["list", "grid"] as const).map((mode) => {
+          const isSelected = viewMode === mode;
+          return (
+            <Pressable
+              key={mode}
+              accessibilityLabel={`${mode} view`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => setViewMode(mode)}
+              style={[
+                styles.viewToggleButton,
+                isSelected && styles.activeViewToggleButton,
+              ]}
+            >
+              <Ionicons
+                name={mode === "list" ? "list-outline" : "grid-outline"}
+                size={20}
+                color={
+                  isSelected
+                    ? styles.activeViewToggleIcon.color
+                    : styles.inactiveViewToggleIcon.color
+                }
+              />
+            </Pressable>
+          );
+        })}
       </View>
 
       <FlatList
-        key={`${activeTab}-${viewMode}`}
+        // Only `numColumns` requires a remount. Keying on activeTab as well
+        // threw away scroll position and cell recycling on every tab press.
+        key={viewMode}
         data={filteredData}
         numColumns={viewMode === "grid" ? 2 : 1}
         keyExtractor={(item) => item.id}
@@ -115,16 +109,15 @@ export default function LibraryFilterTab() {
           const isStatusActive = !item.isCompleted;
           return (
             <Pressable
+              accessibilityLabel={`${item.title}, ${item.metadata}, ${item.statusText}`}
+              accessibilityRole="button"
               style={[
                 styles.rowContainer,
                 viewMode === "grid" && styles.gridItem,
               ]}
             >
               <View style={styles.iconBox}>
-                <Ionicons
-                  name={renderIconSymbol(item.type)}
-                  style={styles.iconText}
-                />
+                <Ionicons name={ICON_BY_TYPE[item.type]} style={styles.iconText} />
               </View>
 
               <View
@@ -167,23 +160,22 @@ export default function LibraryFilterTab() {
 const styles = StyleSheet.create({
   screenBackground: {
     flex: 1,
-    marginTop: 18,
+    marginTop: theme.spacing.lg + 2,
   },
-  /* Tab Bar Styling */
   tabBarContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.xl - 4,
     borderBottomWidth: 1,
     borderColor: theme.color.border,
-    paddingTop: 16,
+    paddingTop: theme.spacing.lg,
   },
   viewToggleContainer: {
     alignSelf: "flex-end",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
     flexDirection: "row",
-    margin: 12,
+    margin: theme.spacing.md,
     padding: 3,
   },
   viewToggleButton: {
@@ -194,21 +186,21 @@ const styles = StyleSheet.create({
     width: 38,
   },
   activeViewToggleButton: {
-    backgroundColor: theme.color.warning,
+    backgroundColor: theme.color.brand,
   },
   activeViewToggleIcon: {
-    color: theme.color.background,
+    color: theme.color.onBrand,
   },
   inactiveViewToggleIcon: {
     color: theme.color.textSecondary,
   },
   tabButton: {
     alignItems: "center",
-    paddingBottom: 12,
+    paddingBottom: theme.spacing.md,
     position: "relative",
   },
   tabText: {
-    fontSize: 16,
+    fontSize: theme.fontSize.lg,
     fontWeight: "600",
     letterSpacing: -0.2,
   },
@@ -224,77 +216,77 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: theme.color.warning,
+    backgroundColor: theme.color.brand,
     borderRadius: 2,
   },
   listPadding: {
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
   },
   rowContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 10,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md - 2,
   },
   gridColumnWrapper: {
-    gap: 12,
-    paddingHorizontal: 10,
+    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md - 2,
   },
   gridItem: {
     alignItems: "flex-start",
     flex: 1,
     flexDirection: "column",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.md + 2,
   },
   iconBox: {
     width: 48,
     height: 48,
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: theme.color.border,
   },
   iconText: {
-    fontSize: 16,
-    color: theme.color.warning,
+    fontSize: theme.fontSize.lg,
+    color: theme.color.brand,
   },
   contentContainer: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: theme.spacing.lg,
     justifyContent: "center",
   },
   gridContentContainer: {
     marginLeft: 0,
-    marginTop: 12,
+    marginTop: theme.spacing.md,
     width: "100%",
   },
   titleText: {
     color: theme.color.text,
-    fontSize: 14,
+    fontSize: theme.fontSize.md,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   metadataText: {
     color: theme.color.textSecondary,
-    fontSize: 13,
+    fontSize: theme.fontSize.sm,
     fontWeight: "500",
   },
   statusContainer: {
-    marginLeft: 12,
+    marginLeft: theme.spacing.md,
   },
   gridStatusContainer: {
     marginLeft: 0,
-    marginTop: 10,
+    marginTop: theme.spacing.sm + 2,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.md,
     fontWeight: "700",
   },
   activeStatus: {
-    color: theme.color.warning,
+    color: theme.color.brand,
   },
   inactiveStatus: {
     color: theme.color.textSecondary,
@@ -302,6 +294,6 @@ const styles = StyleSheet.create({
   separatorLine: {
     height: 1,
     backgroundColor: theme.color.border,
-    marginHorizontal: 20,
+    marginHorizontal: theme.spacing.xl - 4,
   },
 });

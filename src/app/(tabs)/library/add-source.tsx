@@ -1,4 +1,4 @@
-import AddSourceScreen from "@/modules/library/components/AddSourceScreen";
+import { AddSourceScreen } from "@/modules/library";
 
 export default function AddSourceRoute() {
   return <AddSourceScreen />;

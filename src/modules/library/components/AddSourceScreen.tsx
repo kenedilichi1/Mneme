@@ -1,42 +1,10 @@
-import { theme } from "@/constant/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const sourceOptions = [
-  {
-    title: "Upload book or PDF",
-    description: "eBooks, documents",
-    icon: "document-outline" as const,
-    route: "/library/upload" as const,
-  },
-  {
-    title: "Upload audio",
-    description: "Lectures, podcasts, talks",
-    icon: "musical-notes-outline" as const,
-  },
-  {
-    title: "Add video",
-    description: "Upload a file or paste a link",
-    icon: "play-outline" as const,
-  },
-  {
-    title: "Add link",
-    description: "Articles, blog posts, papers",
-    icon: "link-outline" as const,
-  },
-  {
-    title: "Record a voice note",
-    description: "Capture your own thoughts",
-    icon: "mic-outline" as const,
-  },
-  {
-    title: "Scan a document",
-    description: "Use your camera",
-    icon: "scan-outline" as const,
-  },
-];
+import { theme, typography } from "@/constant/theme";
+import { SOURCE_OPTIONS } from "../data/sourceOptions";
 
 export default function AddSourceScreen() {
   return (
@@ -54,32 +22,47 @@ export default function AddSourceScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <View>
-        {sourceOptions.map((option) => (
-          <Pressable
-            key={option.title}
-            onPress={() => option.route && router.push(option.route)}
-            style={styles.option}
-          >
-            <View style={styles.iconBox}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {SOURCE_OPTIONS.map((option) => {
+          const isAvailable = option.route !== undefined;
+          return (
+            <Pressable
+              key={option.title}
+              accessibilityLabel={
+                isAvailable ? option.title : `${option.title}, coming soon`
+              }
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !isAvailable }}
+              disabled={!isAvailable}
+              onPress={() => option.route && router.push(option.route)}
+              style={({ pressed }) => [
+                styles.option,
+                !isAvailable && styles.unavailable,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.iconBox}>
+                <Ionicons
+                  name={option.icon}
+                  size={28}
+                  color={theme.color.brand}
+                />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={styles.optionTitle}>{option.title}</Text>
+                <Text style={styles.optionDescription}>
+                  {isAvailable ? option.description : "Coming soon"}
+                </Text>
+              </View>
               <Ionicons
-                name={option.icon}
-                size={28}
-                color={theme.color.warning}
+                name="chevron-forward"
+                size={22}
+                color={theme.color.textSecondary}
               />
-            </View>
-            <View style={styles.optionText}>
-              <Text style={styles.optionTitle}>{option.title}</Text>
-              <Text style={styles.optionDescription}>{option.description}</Text>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={22}
-              color={theme.color.textSecondary}
-            />
-          </Pressable>
-        ))}
-      </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -88,7 +71,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.color.background,
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.xl - 4,
   },
   header: {
     alignItems: "center",
@@ -104,39 +87,43 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 48,
   },
-  title: {
-    color: theme.color.text,
-    fontSize: 28,
-    fontWeight: "700",
-  },
+  title: typography.screenTitle,
   option: {
     alignItems: "center",
     borderBottomColor: theme.color.border,
     borderBottomWidth: 1,
     flexDirection: "row",
     minHeight: 106,
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.lg,
+  },
+  // Five of these six flows aren't built yet; the row used to look tappable
+  // and silently do nothing.
+  unavailable: {
+    opacity: 0.45,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   iconBox: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     height: 68,
     justifyContent: "center",
     width: 68,
   },
   optionText: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: theme.spacing.xl - 4,
   },
   optionTitle: {
     color: theme.color.text,
-    fontSize: 18,
+    fontSize: theme.fontSize.xl,
     fontWeight: "700",
-    marginBottom: 6,
+    marginBottom: theme.spacing.xs + 2,
   },
   optionDescription: {
     color: theme.color.textSecondary,
-    fontSize: 15,
+    fontSize: theme.fontSize.lg - 1,
   },
 });

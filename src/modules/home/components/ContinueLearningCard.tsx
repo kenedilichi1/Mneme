@@ -1,5 +1,6 @@
-import { theme } from "@/constant/theme";
 import { StyleSheet, Text, View } from "react-native";
+
+import { theme, typography } from "@/constant/theme";
 
 type ContinueLearningCardProps = {
   readonly title: string;
@@ -15,7 +16,11 @@ export default function ContinueLearningCard({
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Continue Learning</Text>
-      <View style={styles.card}>
+      <View
+        accessible
+        accessibilityLabel={`${title}, ${progress}% complete, ${chapter}`}
+        style={styles.card}
+      >
         <View style={styles.bookCover} />
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={2}>
@@ -32,43 +37,41 @@ export default function ContinueLearningCard({
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 32,
+    marginTop: theme.spacing.xxl,
   },
   sectionTitle: {
-    color: theme.color.text,
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
+    ...typography.sectionTitle,
+    marginBottom: theme.spacing.sm,
   },
   card: {
     alignItems: "center",
     backgroundColor: theme.color.surfaceElevated,
-    borderRadius: 24,
+    borderRadius: theme.radius.xxl,
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingHorizontal: theme.spacing.xl - 4,
+    paddingVertical: theme.spacing.lg + 2,
   },
   bookCover: {
-    backgroundColor: theme.color.primary,
-    borderRadius: 8,
+    backgroundColor: theme.color.brand,
+    borderRadius: theme.radius.sm,
     height: 68,
     width: 48,
   },
   textContainer: {
     flex: 1,
     justifyContent: "center",
-    marginLeft: 16,
+    marginLeft: theme.spacing.lg,
   },
   title: {
     color: theme.color.text,
-    fontSize: 18,
+    fontSize: theme.fontSize.xl,
     fontWeight: "700",
     lineHeight: 24,
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   subtitle: {
     color: theme.color.textSecondary,
-    fontSize: 14,
+    fontSize: theme.fontSize.md,
     fontWeight: "500",
   },
 });
